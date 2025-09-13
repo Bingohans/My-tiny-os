@@ -1,56 +1,71 @@
-My Tiny OS
-A simple 32-bit "Hello World" kernel for the x86 architecture, built from scratch. This project demonstrates the creation of a minimal operating system that boots using QEMU, featuring a basic bootloader, a C-based kernel, and VGA text output. It follows tutorials from the OSDev.org Wiki and showcases low-level programming, cross-compiler setup, and system boot processes.
-Project Overview
-This repository implements a minimal operating system with the following components:
+# My Tiny OS
 
-Bootloader: A Multiboot-compliant assembly stub (boot.s) that sets up a stack and hands control to the C kernel.
-Kernel: A C-based kernel (kernel.c) that initializes a VGA text buffer and prints "Hello, kernel World!" to the screen.
-Linker Script: A linker script (linker.ld) to organize the kernel's memory layout for proper loading at boot.
-Cross-Compiler: A custom-built i686-elf toolchain to compile and link the kernel for the x86 architecture.
+A minimal 32-bit "Hello World" kernel for the x86 architecture, built from scratch. This project demonstrates low-level programming by creating a basic operating system that boots using QEMU, featuring a Multiboot-compliant bootloader, a C-based kernel, and VGA text output. It follows tutorials from the [OSDev.org Wiki](https://wiki.osdev.org).
 
-The OS is booted using QEMU, demonstrating fundamental concepts of OS development, including memory management, assembly programming, and hardware interaction.
-Architecture
-The system follows a simple boot process:
+## Project Overview
 
-Bootloader (boot.s): Initializes the stack and calls the C kernel's kernel_main function.
-Kernel (kernel.c): Clears the VGA buffer and writes text to the screen using a basic terminal driver.
-Linker (linker.ld): Ensures the kernel is loaded at the 2MB memory address with proper section alignment.
-QEMU: Emulates an x86 environment to run the kernel without physical hardware.
+This repository implements a simple operating system with the following components:
 
-graph TD
-    A[BIOS/GRUB] -->|Loads| B[Bootloader: boot.s]
-    B -->|Sets up stack| C[Kernel: kernel.c]
-    C -->|Initializes| D[VGA Text Buffer]
-    D -->|Outputs| E[Hello, kernel World!]
-    A -->|Runs in| F[QEMU Emulator]
+- Bootloader: A Multiboot-compliant assembly stub that sets up a stack and hands control to the C kernel.
+- Kernel: A C program that initializes a VGA text buffer and prints "Hello, kernel World!" to the screen.
+- Linker Script: Organizes the kernel's memory layout for proper loading at boot.
+- Cross-Compiler: A custom i686-elf toolchain for compiling and linking the kernel for x86.
 
-Prerequisites
-This project requires a Linux-based environment (tested on Debian-based distributions like Ubuntu or Linux Mint). The following tools are needed:
+The OS is tested using QEMU, showcasing fundamental OS development concepts like memory management, assembly programming, and hardware interaction.
 
-Build Tools:
-sudo apt update
-sudo apt install build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo
+## Architecture
 
+The boot process involves the following steps:
 
-QEMU Emulator:
-sudo apt install qemu-system-x86
+- The BIOS or GRUB loads the Multiboot-compliant bootloader.
+- The bootloader sets up a stack and calls the kernel's main function.
+- The kernel initializes the VGA text buffer.
+- The kernel outputs "Hello, kernel World!" to the screen.
+- The system runs within the QEMU emulator for testing.
 
+## Repository Files
 
+The repository contains the following files:
 
-Setup Instructions
-Part 1: Building the Cross-Compiler Toolchain
+- README.md: Project documentation.
+- boot.s: Multiboot bootloader in assembly.
+- kernel.c: Main kernel with VGA driver.
+- linker.ld: Linker script for memory layout.
+
+## Prerequisites
+
+This project requires a Linux-based environment (tested on Debian-based distributions like Ubuntu or Linux Mint). You need to install build tools (e.g., build-essential, bison, flex, and related libraries) and the QEMU emulator for x86.
+
+1. **Build Tools**:
+
+   ```bash
+   sudo apt update
+   sudo apt install build-essential bison flex libgmp-dev libmpc-dev libmpfr-dev texinfo
+
+## Setup Instructions
+
+### Part 1: Building the Cross-Compiler Toolchain
+
 A cross-compiler (i686-elf) is required to compile code for the x86 target architecture.
-1.1 Environment Setup
+
+## 1.1 Environment Setup
+
 Set environment variables for the toolchain:
-export PREFIX="$HOME/opt/cross"
-export TARGET=i686-elf
-export PATH="$PREFIX/bin:$PATH"
+
+   ```bash
+   export PREFIX="$HOME/opt/cross"
+   export TARGET=i686-elf
+   export PATH="$PREFIX/bin:$PATH"
+   ```
 
 Add the PATH export to ~/.bashrc or ~/.profile for persistence.
-1.2 Building Binutils
 
-Download Binutils (e.g., binutils-2.42.tar.gz) from GNU Binutils.
-Build and install:mkdir $HOME/src
+### 1.2 Building Binutils
+
+Download the latest Binutils source code from the GNU Binutils website, extract it, configure the build for the i686-elf target, compile, and install.
+
+```bash
+mkdir $HOME/src
 cd $HOME/src
 tar -xzf binutils-2.42.tar.gz
 mkdir build-binutils
@@ -58,14 +73,16 @@ cd build-binutils
 ../binutils-2.42/configure --target=$TARGET --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
 make
 make install
-
-
+```
 
 Verify with: which i686-elf-as.
-1.3 Building GCC
 
-Download GCC (e.g., gcc-14.1.0.tar.gz) from GCC website.
-Build and install:cd $HOME/src
+#### 1.3 Building GCC
+
+Download the latest GCC source code from the GCC website, extract it, configure the build for the i686-elf target with specific flags for a freestanding environment, compile, and install both the compiler and supporting libraries.
+
+```bash
+cd $HOME/src
 tar -xzf gcc-14.1.0.tar.gz
 mkdir build-gcc
 cd build-gcc
@@ -74,25 +91,22 @@ make all-gcc
 make install-gcc
 make CFLAGS_FOR_TARGET="-mno-red-zone" all-target-libgcc
 make CFLAGS_FOR_TARGET="-mno-red-zone" install-target-libgcc
+```
 
+### Part 2: Creating the Kernel
 
+The kernel consists of three files: a bootloader in assembly, the main kernel in C, and a linker script.
 
-Part 2: Creating the Kernel
-The kernel consists of three files: boot.s (bootloader), kernel.c (main kernel), and linker.ld (linker script).
-Repository Structure
-├── README.md
-├── boot.s
-├── kernel.c
-├── linker.ld
-├── Makefile
+#### 2.1 Bootloader
 
-2.1 Bootloader (boot.s)
-Sets up a Multiboot-compliant stack and calls the kernel:
-.set ALIGN,    1<<0             # align loaded modules on page boundaries
-.set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MAGIC + FLAGS) # checksum required
+The bootloader is a Multiboot-compliant assembly program that sets up a stack and calls the kernel's main function.
+
+```bash
+.set ALIGN,    1<<0
+.set MEMINFO,  1<<1
+.set FLAGS,    ALIGN | MEMINFO
+.set MAGIC,    0x1BADB002  
+.set CHECKSUM, -(MAGIC + FLAGS) 
 
 .section .multiboot
 .align 4
@@ -118,9 +132,13 @@ _start:
     jmp 1b
 
 .size _start, . - _start
+```
 
-2.2 Linker Script (linker.ld)
-Organizes the kernel's memory layout:
+#### 2.2 Linker Script
+
+The linker script organizes the kernel's memory layout, ensuring proper loading at the 2MB address with aligned sections.
+
+```bash
 ENTRY(_start)
 
 SECTIONS
@@ -149,9 +167,13 @@ SECTIONS
         *(.bss)
     }
 }
+```
 
-2.3 Kernel (kernel.c)
-Implements a simple VGA terminal driver to print text:
+#### 2.3 Kernel
+
+The kernel is a C program that implements a simple VGA terminal driver to print text to the screen.
+
+```bash
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -234,60 +256,67 @@ void kernel_main(void) {
     terminal_writestring("Hello, kernel World!\n");
     terminal_writestring("This is My Tiny OS.");
 }
+```
 
-Part 3: Compiling and Linking
-Compile and link the kernel using the cross-compiler:
+### Part 3: Compiling and Linking
 
-Assemble the bootloader:i686-elf-as boot.s -o boot.o
+Use the cross-compiler to assemble the bootloader, compile the kernel, and link them into a bootable binary.
 
+1. Assemble the bootloader:
 
-Compile the kernel:i686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+```bash
+bashi686-elf-as boot.s -o boot.o
+```
 
+2. Compile the kernel:
+```bash 
+bashi686-elf-gcc -c kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+```
 
-Link the kernel:i686-elf-gcc -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib boot.o kernel.o -lgcc
-
-
+3. Link the kernel:
+```bash
+bashi686-elf-gcc -T linker.ld -o myos.bin -ffreestanding -O2 -nostdlib boot.o kernel.o -lgcc
+```
 
 The output file myos.bin is your bootable kernel.
-Part 4: Running the OS
-Boot the kernel using QEMU:
+
+### Part 4: Running the OS
+
+Boot the kernel using QEMU, which will display "Hello, kernel World!" and "This is My Tiny OS." in a QEMU window.
+
+```bash
 qemu-system-i386 -kernel myos.bin
+```
 
-A QEMU window will display "Hello, kernel World!" and "This is My Tiny OS.".
-Challenges & Solutions
+## Challenges & Solutions
 
-Challenge: The cross-compiler setup failed due to missing dependencies (libmpc-dev, libmpfr-dev).
-Solution: Installed required libraries using apt install and verified with dpkg -l.
+- **Challenge**: Cross-compiler setup failed due to missing dependencies.
+  - **Solution**: Installed required libraries and verified their presence.
+- **Challenge**: Linker errors occurred due to incorrect GCC configuration.
+  - **Solution**: Added specific flags to the GCC build for compatibility with a freestanding environment.
+- **Challenge**: QEMU failed to boot with a "Multiboot header not found" error.
+  - **Solution**: Verified the Multiboot magic number and flags in the bootloader and ensured proper section alignment in the linker script.
 
+## Lessons Learned
 
-Challenge: Linker errors occurred due to incorrect GCC configuration.
-Solution: Added --with-newlib and -mno-red-zone flags to GCC build to ensure compatibility with a freestanding environment.
+- Gained deep understanding of low-level programming, including assembly, memory layout, and VGA hardware interaction.
+- Mastered cross-compiler setup for i686-elf, critical for OS development.
+- Learned to debug boot issues using QEMU’s error messages and OSDev.org resources.
 
+## Future Improvements
 
-Challenge: QEMU failed to boot with a "Multiboot header not found" error.
-Solution: Verified the Multiboot magic number and flags in boot.s and ensured proper section alignment in linker.ld.
+- Add a basic keyboard driver to accept user input.
+- Implement a simple filesystem (e.g., FAT32) for persistent storage.
+- Extend the kernel to support multitasking or interrupts.
+- Automate the build process with a Makefile for easier compilation.
 
+## Resources
 
+- [OSDev.org Wiki](https://wiki.osdev.org): Primary guide for this project.
+- [GNU Binutils](https://www.gnu.org/software/binutils/): Source for Binutils.
+- [GCC Website](https://gcc.gnu.org/): Source for GCC.
+- [QEMU Documentation](https://www.qemu.org/docs/master/): Emulator setup and usage.
 
-Lessons Learned
+## License
 
-Gained deep understanding of low-level programming, including assembly, memory layout, and VGA hardware interaction.
-Mastered cross-compiler setup for i686-elf, critical for OS development.
-Learned to debug boot issues using QEMU’s error messages and OSDev.org resources.
-
-Future Improvements
-
-Add a basic keyboard driver to accept user input.
-Implement a simple filesystem (e.g., FAT32) for persistent storage.
-Extend the kernel to support multitasking or interrupts.
-Automate the build process with a Makefile for easier compilation.
-
-Resources
-
-OSDev.org Wiki: Primary guide for this project.
-GNU Binutils: Source for Binutils.
-GCC Website: Source for GCC.
-QEMU Documentation: Emulator setup and usage.
-
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details
