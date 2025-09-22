@@ -320,3 +320,24 @@ qemu-system-i386 -kernel myos.bin
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details
+
+
+```
+ansible-playbooks/
+├── inventory/
+│   └── production
+├── group_vars/
+│   ├── all.yml
+│   └── webservers.yml
+├── host_vars/
+├── roles/
+│   ├── webserver/
+│   │   ├── tasks/
+│   │   ├── handlers/
+│   │   └── templates/
+│   └── database/
+├── site.yml
+├── install_git.yml
+└── .gitignore
+```
+
